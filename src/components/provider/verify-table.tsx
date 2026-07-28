@@ -7,6 +7,7 @@ import { classificationDisplay } from '@/lib/ui/classification-display';
 import { cn } from '@/lib/ui/cn';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { StatusPill } from '@/components/ui/status-pill';
+import { PendingNote } from './pending-note';
 
 export interface EditableRow {
   id: string;
@@ -181,6 +182,10 @@ export function VerifyTable({ reportId, rows }: { reportId: string; rows: Editab
           Reset changes
         </button>
       </div>
+      <PendingNote>
+        Classifying each value and drafting the explanation from MedlinePlus. This runs a live model
+        call and takes a few seconds.
+      </PendingNote>
     </form>
   );
 }

@@ -29,6 +29,7 @@ import {
 } from '@/components/provider/critical-outreach-panel';
 import { CopyLinkButton } from '@/components/provider/copy-link-button';
 import { PdfFileInput } from '@/components/provider/pdf-file-input';
+import { PendingNote } from '@/components/provider/pending-note';
 
 function formatExpiry(expiresAt: string): string {
   return new Date(expiresAt).toLocaleDateString('en-US', {
@@ -129,6 +130,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               <div className="mt-4">
                 <SubmitButton pendingLabel="Reading...">Read the results</SubmitButton>
               </div>
+              <PendingNote>
+                Transcribing the report line by line. With a PDF this is a live model call and takes
+                a few seconds.
+              </PendingNote>
             </form>
           </section>
         )}
@@ -169,6 +174,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             <form action={retryDraftAction} className="mt-4">
               <input type="hidden" name="reportId" value={report.id} />
               <SubmitButton pendingLabel="Drafting...">Draft the explanation</SubmitButton>
+              <PendingNote>
+                Drafting the explanation from MedlinePlus. This runs a live model call and takes a
+                few seconds.
+              </PendingNote>
             </form>
           </section>
         )}

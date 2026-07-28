@@ -78,9 +78,20 @@ export function ResultsPage({
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-forest underline underline-offset-2"
+                  className="inline-flex items-center gap-1.5 text-sm text-forest underline underline-offset-2"
                 >
                   {source.title}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    aria-hidden
+                    className="h-3 w-3"
+                  >
+                    <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span className="sr-only">(opens in a new tab)</span>
                 </a>
               </li>
             ))}

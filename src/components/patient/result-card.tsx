@@ -87,9 +87,20 @@ export function ResultCard({ item }: { item: ResultItem }) {
           href={item.medlineplusUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-4 inline-block text-sm font-medium text-forest underline underline-offset-2"
+          className="group mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-forest underline underline-offset-2"
         >
           Learn more at MedlinePlus
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden
+            className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          >
+            <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="sr-only">(opens in a new tab)</span>
         </a>
       )}
     </article>
