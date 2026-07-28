@@ -22,12 +22,18 @@ export function TextSizeToggle() {
   // syncs the DOM, so no setState runs inside an effect.
   const [size, setSize] = useState<Size>(readInitial);
 
+  // Apply on every change (no cleanup here, so switching does not flash through
+  // 'base' between renders).
   useEffect(() => {
     document.documentElement.dataset.reading = size;
+  }, [size]);
+
+  // Reset only when leaving the patient view, so the scale never carries over.
+  useEffect(() => {
     return () => {
       document.documentElement.dataset.reading = 'base';
     };
-  }, [size]);
+  }, []);
 
   function choose(next: Size) {
     setSize(next);

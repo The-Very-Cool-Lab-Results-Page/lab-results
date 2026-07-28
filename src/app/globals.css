@@ -52,10 +52,11 @@ summary,
   border-radius: 3px;
 }
 
-/* Patient reading-size control (TextSizeToggle): scales the rem base so the
-   patient type scale grows together. Only patient pages set data-reading. */
-html[data-reading='lg'] {
-  font-size: 112.5%;
+/* Patient reading-size control (TextSizeToggle): scales only the results content
+   (.reading-scope), not the page chrome, so the toggle itself does not resize
+   under the cursor. zoom scales the rendered subtree, sidestepping the rem base. */
+html[data-reading='lg'] .reading-scope {
+  zoom: 1.12;
 }
 
 /* Result cards ease in on first paint; staggered via inline animation-delay.
