@@ -21,6 +21,32 @@ export function reportStatusDisplay(status: ReportStatus): { label: string; tone
   }
 }
 
+/**
+ * The provider's next action on a report, for the dashboard worklist. `urgency`
+ * orders the list so what needs attention floats up: a held critical result is
+ * most urgent, then a draft to approve, then reports mid-pipeline, then an
+ * approved report waiting to send. A sent report needs nothing, so it returns
+ * null and sinks to the bottom.
+ */
+export function reportAction(status: ReportStatus): { verb: string; urgency: number } | null {
+  switch (status) {
+    case 'held':
+      return { verb: 'Contact patient', urgency: 0 };
+    case 'drafted':
+      return { verb: 'Review draft', urgency: 1 };
+    case 'extracted':
+      return { verb: 'Verify results', urgency: 2 };
+    case 'verified':
+      return { verb: 'Continue', urgency: 2 };
+    case 'uploaded':
+      return { verb: 'Read the report', urgency: 3 };
+    case 'approved':
+      return { verb: 'Send to patient', urgency: 4 };
+    case 'sent':
+      return null;
+  }
+}
+
 export const PROVIDER_STEPS = ['Upload', 'Verify', 'Review draft', 'Approve', 'Send'];
 
 export function stepIndexForStatus(status: ReportStatus): number {
