@@ -30,6 +30,7 @@ import {
 import { CopyLinkButton } from '@/components/provider/copy-link-button';
 import { PdfFileInput } from '@/components/provider/pdf-file-input';
 import { PendingNote } from '@/components/provider/pending-note';
+import { ScrollReset } from '@/components/provider/scroll-reset';
 
 function formatExpiry(expiresAt: string): string {
   return new Date(expiresAt).toLocaleDateString('en-US', {
@@ -82,6 +83,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   return (
     <div>
+      <ScrollReset trigger={report.status} />
       <Link href="/provider" className="text-sm text-forest hover:underline">
         Back to reports
       </Link>
