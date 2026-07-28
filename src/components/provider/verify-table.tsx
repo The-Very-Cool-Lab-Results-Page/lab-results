@@ -22,6 +22,10 @@ export interface EditableRow {
   lowConfidenceFields: string[];
 }
 
+// Grid template shared by the header and every row on desktop, so columns line
+// up. On mobile the grid collapses to one column and each field labels itself.
+const GRID = 'md:grid md:grid-cols-[1.4fr_0.9fr_0.8fr_0.8fr_0.8fr_1.2fr_auto] md:items-center md:gap-3';
+
 const inputBase =
   'w-full rounded border bg-white px-2 py-1.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-forest/30';
 
@@ -44,6 +48,8 @@ function newRow(): EditableRow {
   };
 }
 
+const COLUMNS = ['Test', 'Value', 'Unit', 'Ref low', 'Ref high', 'Will show as'];
+
 export function VerifyTable({ reportId, rows }: { reportId: string; rows: EditableRow[] }) {
   const [editable, setEditable] = useState<EditableRow[]>(rows);
 
@@ -63,98 +69,83 @@ export function VerifyTable({ reportId, rows }: { reportId: string; rows: Editab
       <input type="hidden" name="reportId" value={reportId} />
       <input type="hidden" name="rows" value={JSON.stringify(editable)} />
 
-      <div className="overflow-x-auto rounded-[var(--radius-card)] border border-line bg-paper">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead>
-            <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-              <th className="px-3 py-3 font-medium">Test</th>
-              <th className="px-3 py-3 font-medium">Value</th>
-              <th className="px-3 py-3 font-medium">Unit</th>
-              <th className="px-3 py-3 font-medium">Ref low</th>
-              <th className="px-3 py-3 font-medium">Ref high</th>
-              <th className="px-3 py-3 font-medium">Will show as</th>
-              <th className="px-3 py-3">
-                <span className="sr-only">Remove</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {editable.map((row, index) => {
-              const preview = classificationDisplay(
-                previewClassification({
-                  rawName: row.rawName,
-                  value: row.value,
-                  unit: row.unit,
-                  refLow: toNumber(row.refLow),
-                  refHigh: toNumber(row.refHigh),
-                  labFlags: row.labFlags,
-                }),
-              );
-              const lowConf = (field: string) => row.lowConfidenceFields.includes(field);
-              const cell = (field: string) =>
-                cn(inputBase, lowConf(field) ? 'border-amber ring-1 ring-amber/40' : 'border-line');
-              return (
-                <tr key={row.id} className="border-b border-line/60 last:border-0">
-                  <td className="px-3 py-2">
-                    <input
-                      className={cell('rawName')}
-                      value={row.rawName}
-                      aria-label="Test name"
-                      onChange={(e) => update(index, 'rawName', e.target.value)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      className={cell('value')}
-                      value={row.value}
-                      aria-label="Value"
-                      onChange={(e) => update(index, 'value', e.target.value)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      className={cell('unit')}
-                      value={row.unit}
-                      aria-label="Unit"
-                      onChange={(e) => update(index, 'unit', e.target.value)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      className={cell('refLow')}
-                      value={row.refLow}
-                      aria-label="Reference low"
-                      onChange={(e) => update(index, 'refLow', e.target.value)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <input
-                      className={cell('refHigh')}
-                      value={row.refHigh}
-                      aria-label="Reference high"
-                      onChange={(e) => update(index, 'refHigh', e.target.value)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    {row.rawName.trim() !== '' && (
-                      <StatusPill tone={preview.tone} label={preview.label} />
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="text-xs text-muted hover:text-critical"
-                      aria-label={`Remove ${row.rawName || 'row'}`}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="overflow-hidden rounded-[var(--radius-card)] border border-line bg-paper">
+        {/* Sticky column header, desktop only; on mobile each field self-labels. */}
+        <div
+          className={cn(
+            GRID,
+            'sticky top-0 z-10 hidden border-b border-line bg-paper px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted md:block',
+          )}
+        >
+          {COLUMNS.map((column) => (
+            <span key={column}>{column}</span>
+          ))}
+          <span className="sr-only">Remove</span>
+        </div>
+
+        <div className="flex flex-col gap-3 p-3 md:gap-0 md:p-0">
+          {editable.map((row, index) => {
+            const preview = classificationDisplay(
+              previewClassification({
+                rawName: row.rawName,
+                value: row.value,
+                unit: row.unit,
+                refLow: toNumber(row.refLow),
+                refHigh: toNumber(row.refHigh),
+                labFlags: row.labFlags,
+              }),
+            );
+            const lowConf = (field: string) => row.lowConfidenceFields.includes(field);
+            const cell = (field: string) =>
+              cn(inputBase, lowConf(field) ? 'border-amber ring-1 ring-amber/40' : 'border-line');
+
+            // One field: a mobile-only label above the input; desktop uses the header row.
+            const field = (label: string, name: keyof EditableRow, ariaLabel: string) => (
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-muted md:hidden">{label}</span>
+                <input
+                  className={cell(name)}
+                  value={row[name] as string}
+                  aria-label={ariaLabel}
+                  onChange={(e) => update(index, name, e.target.value)}
+                />
+              </label>
+            );
+
+            return (
+              <div
+                key={row.id}
+                className={cn(
+                  GRID,
+                  'gap-3 rounded-lg border border-line p-3',
+                  'md:gap-3 md:rounded-none md:border-0 md:border-b md:border-line/60 md:p-4 md:last:border-0',
+                )}
+              >
+                {field('Test', 'rawName', 'Test name')}
+                {field('Value', 'value', 'Value')}
+                {field('Unit', 'unit', 'Unit')}
+                {field('Ref low', 'refLow', 'Reference low')}
+                {field('Ref high', 'refHigh', 'Reference high')}
+                <div className="flex items-center justify-between gap-2 md:block">
+                  <span className="text-xs font-medium text-muted md:hidden">Will show as</span>
+                  {row.rawName.trim() !== '' && (
+                    <StatusPill tone={preview.tone} label={preview.label} />
+                  )}
+                </div>
+                <div className="flex justify-end md:block">
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="text-xs text-muted transition-colors hover:text-critical"
+                    aria-label={`Remove ${row.rawName || 'row'}`}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <button
