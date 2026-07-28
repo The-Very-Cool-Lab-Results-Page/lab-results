@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Explanation, PatientInfo, Report, ReportStatus, ResultRow } from '@/lib/types';
-import { isExpired } from '@/lib/share-link';
+import { isExpired, SHARE_LINK_TTL_MS } from '@/lib/share-link';
 import type { DataLayer } from './mapping';
 import {
   MOCK_EXPLANATIONS,
@@ -153,7 +153,7 @@ const mockLayer: DataLayer = {
       id: `sl-${randomBytes(4).toString('hex')}`,
       reportId,
       token: randomBytes(18).toString('base64url'),
-      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      expiresAt: new Date(Date.now() + SHARE_LINK_TTL_MS).toISOString(),
       openedAt: undefined,
       supersededAt: undefined,
     };

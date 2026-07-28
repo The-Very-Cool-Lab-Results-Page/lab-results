@@ -97,7 +97,7 @@ The old public landing page is dropped. Design iterates continuously in Figma as
   required attribution).
 - **FR-10** Approval gate: no patient-visible text without `approved` status; provider can
   edit the draft before approving. Approved text is stored and frozen.
-- **FR-11** Share link: unguessable token, DOB-gated, expires 90 days after it is sent,
+- **FR-11** Share link: unguessable token, DOB-gated, expires 30 days after it is sent,
   scoped to one report — exactly one live link per report; a new link can be issued
   after expiry. The superseded link is kept (tombstoned), so the old emailed URL shows
   the expired notice with the clinic phone — never an error page.
