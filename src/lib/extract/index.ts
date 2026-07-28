@@ -15,10 +15,11 @@ import type { ExtractionResult } from './schema';
 export async function extractRows(input: {
   pdfRef: string;
   pdfBytes?: Uint8Array;
+  mediaType?: string;
 }): Promise<ExtractionResult> {
   if (isLiveLLM() && input.pdfBytes !== undefined) {
     const { liveExtract } = await import('./live');
-    return liveExtract(input.pdfBytes);
+    return liveExtract(input.pdfBytes, input.mediaType);
   }
   return offlineExtract(input.pdfRef);
 }

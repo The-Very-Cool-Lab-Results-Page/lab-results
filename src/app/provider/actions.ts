@@ -74,11 +74,14 @@ export async function extractReportAction(formData: FormData): Promise<void> {
   // extractor in the same request (no persistence needed). With no file — or no
   // API key — extraction falls back to the offline synthetic path keyed by the
   // report's pdfRef, so the flow runs end to end without credentials.
+  // The report may be a PDF or a photo of the printout (image/*); pass its real
+  // media type so the model reads it as what it is. An empty type falls back to PDF.
   const file = formData.get('pdf');
-  const pdfBytes =
-    file instanceof File && file.size > 0 ? new Uint8Array(await file.arrayBuffer()) : undefined;
+  const hasBytes = file instanceof File && file.size > 0;
+  const pdfBytes = hasBytes ? new Uint8Array(await file.arrayBuffer()) : undefined;
+  const mediaType = hasBytes && file.type !== '' ? file.type : undefined;
 
-  const { rows } = await extractRows({ pdfRef: report.pdfRef, pdfBytes });
+  const { rows } = await extractRows({ pdfRef: report.pdfRef, pdfBytes, mediaType });
 
   // Transcription only (FR-03): store rows unmatched and unclassified. The
   // analyte match and classification are stamped after the provider verifies the
