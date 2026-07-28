@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { CLINIC } from '@/lib/clinic';
+import { APP_NAME, CLINIC } from '@/lib/clinic';
 import { Disclaimer } from '@/components/ui/disclaimer';
 
 /**
@@ -17,10 +17,7 @@ export default function PatientLayout({ children }: { children: ReactNode }) {
       </a>
       <header className="no-print border-b border-line bg-paper">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-4 py-4 text-sm sm:px-6">
-          <span className="whitespace-nowrap">
-            <span className="font-display text-lg text-ink">{CLINIC.name}</span>
-            <span className="hidden text-muted sm:inline"> · Lab results</span>
-          </span>
+          <span className="whitespace-nowrap font-display text-lg text-ink">{APP_NAME}</span>
           <span className="whitespace-nowrap text-muted">Shared by {CLINIC.providerName}</span>
         </div>
       </header>
