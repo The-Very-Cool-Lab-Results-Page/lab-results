@@ -16,15 +16,19 @@ function typicalRangeText(low: number | null, high: number | null): string {
   return '';
 }
 
-export function ResultCard({ item }: { item: ResultItem }) {
+export function ResultCard({ item, index = 0 }: { item: ResultItem; index?: number }) {
   const isCritical = item.classification.kind === 'range' && item.classification.critical;
   const canDrawMarker = item.display.showMarker && item.numericValue !== null;
   const rangeText = canDrawMarker ? typicalRangeText(item.low, item.high) : '';
+  // Staggered entrance, capped so a long report does not crawl in. The class is
+  // inert under prefers-reduced-motion (globals.css) and settles before print.
+  const animationDelay = `${Math.min(index * 60, 360)}ms`;
 
   return (
     <article
+      style={{ animationDelay }}
       className={cn(
-        'print-avoid-break rounded-[var(--radius-card)] border bg-paper p-5',
+        'animate-fade-rise print-avoid-break rounded-[var(--radius-card)] border bg-paper p-5',
         isCritical ? 'border-critical/40 ring-1 ring-critical/20' : 'border-line',
       )}
     >

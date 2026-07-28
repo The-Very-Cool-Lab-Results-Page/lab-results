@@ -60,8 +60,8 @@ export function ResultsPage({
       <section>
         <h2 className="mb-3 font-display text-2xl text-ink">Your results</h2>
         <div className="flex flex-col gap-4">
-          {view.items.map((item) => (
-            <ResultCard key={item.key} item={item} />
+          {view.items.map((item, index) => (
+            <ResultCard key={item.key} item={item} index={index} />
           ))}
         </div>
       </section>
