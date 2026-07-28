@@ -8,14 +8,7 @@ import { cn } from '@/lib/ui/cn';
 import { StatusPill } from '@/components/ui/status-pill';
 import { EmptyState } from '@/components/ui/empty-state';
 
-type Filter = 'all' | 'in-progress' | 'held' | 'sent';
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'in-progress', label: 'In progress' },
-  { key: 'held', label: 'Held' },
-  { key: 'sent', label: 'Sent' },
-];
+export type ReportFilter = 'all' | 'in-progress' | 'held' | 'sent';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -33,16 +26,15 @@ function initials(name: string): string {
   return letters.toUpperCase();
 }
 
-function matchesFilter(report: Report, filter: Filter): boolean {
+function matchesFilter(report: Report, filter: ReportFilter): boolean {
   if (filter === 'all') return true;
   if (filter === 'held') return report.status === 'held';
   if (filter === 'sent') return report.status === 'sent';
   return report.status !== 'held' && report.status !== 'sent';
 }
 
-export function ReportsBrowser({ reports }: { reports: Report[] }) {
+export function ReportsBrowser({ reports, filter }: { reports: Report[]; filter: ReportFilter }) {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -67,33 +59,14 @@ export function ReportsBrowser({ reports }: { reports: Report[] }) {
 
   return (
     <div className="mt-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-sm transition-colors',
-                filter === key
-                  ? 'bg-forest text-cream'
-                  : 'border border-line bg-paper text-muted hover:text-forest',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search patients"
-          aria-label="Search patients"
-          className="w-full rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20 sm:w-64"
-        />
-      </div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search patients"
+        aria-label="Search patients"
+        className="w-full rounded-full border border-line bg-paper px-4 py-2 text-sm text-ink focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20 sm:w-72"
+      />
 
       {visible.length === 0 ? (
         <div className="mt-6">
