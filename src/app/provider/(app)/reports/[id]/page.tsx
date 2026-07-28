@@ -28,6 +28,7 @@ import {
   type CriticalItem,
 } from '@/components/provider/critical-outreach-panel';
 import { CopyLinkButton } from '@/components/provider/copy-link-button';
+import { PdfFileInput } from '@/components/provider/pdf-file-input';
 
 function formatExpiry(expiresAt: string): string {
   return new Date(expiresAt).toLocaleDateString('en-US', {
@@ -115,18 +116,13 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               The system transcribes each test line. You verify every value before anything is
               classified.
             </p>
-            <form action={extractReportAction} className="mt-6">
+            <form action={extractReportAction} className="mt-6 max-w-xl">
               <input type="hidden" name="reportId" value={report.id} />
-              <label className="block text-sm text-muted">
-                Report PDF <span className="text-muted/70">(optional in v1)</span>
-                <input
-                  type="file"
-                  name="pdf"
-                  accept="application/pdf"
-                  className="mt-1 block text-sm text-ink"
-                />
-              </label>
-              <p className="mt-1 max-w-prose text-xs text-muted">
+              <p className="mb-2 text-sm font-medium text-ink">
+                Report PDF <span className="font-normal text-muted">(optional in v1)</span>
+              </p>
+              <PdfFileInput name="pdf" />
+              <p className="mt-2 max-w-prose text-xs text-muted">
                 With a PDF and an API key configured, the report is transcribed live. Otherwise a
                 synthetic sample is used so the flow can be walked without credentials.
               </p>
