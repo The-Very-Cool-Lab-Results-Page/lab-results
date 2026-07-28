@@ -17,11 +17,15 @@ approval, patient view) plus every safety state, in a fixed order with known dat
    state no matter what is in anyone's database. The key keeps PDF extraction and drafting
    live, which is the wow moment. Leave `LLM_OFFLINE` unset.
 
-2. Start the app and confirm it is up:
+2. From a clean clone, install dependencies once, then start the app:
 
    ```
+   npm install
    npm run dev
    ```
+
+   The app serves on `http://localhost:3000`. If that port is busy it picks 3001; use
+   whatever URL the terminal prints in place of 3000 below.
 
 3. Sign in once at `http://localhost:3000/provider/sign-in` to confirm the credentials
    work: `dr.anderson@demo.clinic` / `demo-password-2026` (prefilled on the form).
@@ -44,8 +48,9 @@ bypass."
 
 ### 2. Sign in and the worklist (30 seconds)
 
-Sign in. The reports list shows patients at every stage: one sent, one held for a critical
-result, one waiting on approval, one just uploaded.
+Sign in. The reports list shows patients at every stage: several already sent, David Chen
+held for a critical result, Grace Okoro waiting on approval, and Samuel Reyes just uploaded.
+Reyes and Chen are the two you drive; the rest are there to show the range of states.
 
 ### 3. Live AI extraction (2 minutes)
 
@@ -58,7 +63,10 @@ it cannot read a field it flags it low-confidence rather than guessing. It never
 whether a value is normal."
 
 When the table appears, point at the glucose row: the PDF really prints 15000, and the
-model transcribed it faithfully instead of correcting it.
+model transcribed it faithfully instead of correcting it. This is a live model call, so
+the exact rows can vary slightly run to run. That is fine: the safety states below are
+decided by deterministic code, not the model, so glucose is still flagged and an unknown
+test is still an honest fallback no matter how the transcription lands.
 
 ### 4. Gate one: provider verification (1 minute)
 
@@ -127,10 +135,14 @@ Vercel with Supabase persistence and real extraction."
 
 ## If something goes wrong
 
-- Live extraction errors or stalls: restart the dev server, reopen Reyes, and click
-  "Read the results" without attaching the PDF. The synthetic path returns instantly and
-  the rest of the script is unchanged; only the transcription-of-15000 beat is lost.
+- Live extraction errors or stalls: click "New report", fill in any patient, and click
+  "Read the results" (no PDF needed). A freshly created report runs the synthetic path and
+  returns instantly, so you still get a full loop to walk. Only the transcription-of-15000
+  beat is lost. Note: this offline path works only for reports you create here, not for the
+  Reyes seed, which has no synthetic fixture and needs the live key.
 - Clicked too far or approved the wrong thing: "Start over" on the report page, or
   restart the dev server to reset every seed.
-- No usable API key on demo day: the synthetic path covers the whole script; skip the
-  narration about live calls.
+- No usable API key on demo day, or the key is out of credits (the error names a low
+  balance): set `LLM_OFFLINE=1` in `.env.local` and restart, then drive the loop from a
+  "New report" (manual entry) instead of Reyes. The rest of the script is unchanged; skip
+  the narration about live calls.
