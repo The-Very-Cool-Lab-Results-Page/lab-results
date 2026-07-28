@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { APP_NAME, CLINIC } from '@/lib/clinic';
 import { Disclaimer } from '@/components/ui/disclaimer';
+import { TextSizeToggle } from '@/components/patient/text-size-toggle';
 
 /**
  * Shared chrome for every patient view. The disclaimer lives here so no patient
@@ -18,7 +19,12 @@ export default function PatientLayout({ children }: { children: ReactNode }) {
       <header className="no-print border-b border-line bg-paper">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-4 py-4 text-sm sm:px-6">
           <span className="whitespace-nowrap font-display text-lg text-ink">{APP_NAME}</span>
-          <span className="whitespace-nowrap text-muted">Shared by {CLINIC.providerName}</span>
+          <span className="flex items-center gap-3">
+            <span className="hidden whitespace-nowrap text-muted sm:inline">
+              Shared by {CLINIC.providerName}
+            </span>
+            <TextSizeToggle />
+          </span>
         </div>
       </header>
       <main id="patient-main" className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">

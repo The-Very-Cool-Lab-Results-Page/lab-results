@@ -25,6 +25,14 @@ function formatDate(iso: string): string {
   });
 }
 
+/** Up to two initials from a patient name, for the row avatar. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const letters =
+    parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : parts[0].slice(0, 2);
+  return letters.toUpperCase();
+}
+
 function matchesFilter(report: Report, filter: Filter): boolean {
   if (filter === 'all') return true;
   if (filter === 'held') return report.status === 'held';
@@ -105,16 +113,27 @@ export function ReportsBrowser({ reports }: { reports: Report[] }) {
                 <Link
                   href={`/provider/reports/${report.id}`}
                   className={cn(
-                    'flex items-center justify-between gap-4 rounded-[var(--radius-card)] border bg-paper py-4 pr-5 pl-5 transition-colors hover:border-forest/40',
+                    'flex items-center justify-between gap-4 rounded-[var(--radius-card)] border bg-paper py-4 pr-5 pl-5 transition-colors hover:border-forest/40 hover:shadow-sm',
                     critical ? 'border-l-4 border-l-critical border-line pl-4' : 'border-line',
                   )}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{report.patient.name}</p>
-                    <p className="truncate text-sm text-muted">{report.patient.email}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      Started {formatDate(report.createdAt)}
-                    </p>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <span
+                      className={cn(
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                        critical ? 'bg-critical-soft text-critical' : 'bg-forest-soft text-forest',
+                      )}
+                      aria-hidden
+                    >
+                      {initials(report.patient.name)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-ink">{report.patient.name}</p>
+                      <p className="truncate text-sm text-muted">{report.patient.email}</p>
+                      <p className="mt-1 text-xs text-muted">
+                        Started {formatDate(report.createdAt)}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
                     <StatusPill tone={status.tone} label={status.label} />

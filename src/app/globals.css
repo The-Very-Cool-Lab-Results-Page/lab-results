@@ -52,6 +52,12 @@ summary,
   border-radius: 3px;
 }
 
+/* Patient reading-size control (TextSizeToggle): scales the rem base so the
+   patient type scale grows together. Only patient pages set data-reading. */
+html[data-reading='lg'] {
+  font-size: 112.5%;
+}
+
 /* Result cards ease in on first paint; staggered via inline animation-delay.
    fill-mode both holds the start state during the delay so the stagger reads.
    Disabled by the reduced-motion block below (duration collapses to ~0). */
