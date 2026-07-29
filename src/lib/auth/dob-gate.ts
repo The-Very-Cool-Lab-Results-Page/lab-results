@@ -30,6 +30,38 @@ export async function setDobConfirmed(token: string): Promise<void> {
   });
 }
 
+/** Consecutive misses after which the gate offers the clinic's phone number. */
+export const DOB_HELP_AFTER_ATTEMPTS = 3;
+
+function attemptsCookieName(token: string): string {
+  return `dob_tries_${token}`;
+}
+
+/**
+ * Count consecutive failed attempts so the gate can offer a phone number instead
+ * of repeating the same refusal. Attempts are never limited — this gates helpful
+ * copy, not access, which is also why the counter is unsigned: forging it cannot
+ * open a report. What the patient typed is never stored or logged (safety rule 5).
+ */
+export async function recordFailedDobAttempt(token: string): Promise<number> {
+  const store = await cookies();
+  const previous = Number(store.get(attemptsCookieName(token))?.value);
+  const next = Number.isInteger(previous) && previous > 0 ? Math.min(previous + 1, 99) : 1;
+  store.set(attemptsCookieName(token), String(next), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: TTL_SECONDS,
+  });
+  return next;
+}
+
+export async function clearDobAttempts(token: string): Promise<void> {
+  const store = await cookies();
+  store.delete(attemptsCookieName(token));
+}
+
 export async function isDobConfirmed(token: string): Promise<boolean> {
   const store = await cookies();
   const cookie = store.get(cookieName(token));

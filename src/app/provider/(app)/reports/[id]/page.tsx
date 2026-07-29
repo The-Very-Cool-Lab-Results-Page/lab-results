@@ -7,12 +7,7 @@ import {
   reportStatusDisplay,
   stepIndexForStatus,
 } from '@/lib/ui/report-status-display';
-import {
-  extractReportAction,
-  resetReportAction,
-  retryDraftAction,
-  sendLinkAction,
-} from '@/app/provider/actions';
+import { resetReportAction, retryDraftAction, sendLinkAction } from '@/app/provider/actions';
 import { classificationDisplay } from '@/lib/ui/classification-display';
 import { criticalAnalyteIds, outstandingOutreach } from '@/lib/ui/outreach';
 import { CLINIC } from '@/lib/clinic';
@@ -20,6 +15,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { StatusPill } from '@/components/ui/status-pill';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmButton } from '@/components/ui/confirm-button';
+import { ExtractForm } from '@/components/provider/extract-form';
 import { VerifyTable } from '@/components/provider/verify-table';
 import { DraftEditor, type DraftEntry } from '@/components/provider/draft-editor';
 import {
@@ -106,25 +102,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               The system transcribes each test line. You verify every value before anything is
               classified.
             </p>
-            <form action={extractReportAction} className="mt-6">
-              <input type="hidden" name="reportId" value={report.id} />
-              <label className="block text-sm text-muted">
-                Report PDF <span className="text-muted/70">(optional in v1)</span>
-                <input
-                  type="file"
-                  name="pdf"
-                  accept="application/pdf"
-                  className="mt-1 block text-sm text-ink"
-                />
-              </label>
-              <p className="mt-1 max-w-prose text-xs text-muted">
-                With a PDF and an API key configured, the report is transcribed live. Otherwise a
-                synthetic sample is used so the flow can be walked without credentials.
-              </p>
-              <div className="mt-4">
-                <SubmitButton pendingLabel="Reading...">Read the results</SubmitButton>
-              </div>
-            </form>
+            <ExtractForm reportId={report.id} />
           </section>
         )}
 

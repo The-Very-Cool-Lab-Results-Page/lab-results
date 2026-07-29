@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { confirmVerificationAction } from '@/app/provider/actions';
 import { previewClassification } from '@/lib/ui/preview-classification';
+import { parseBoundInput } from '@/lib/ui/parse-bound';
 import { classificationDisplay } from '@/lib/ui/classification-display';
 import { cn } from '@/lib/ui/cn';
 import { SubmitButton } from '@/components/ui/submit-button';
@@ -23,11 +24,6 @@ export interface EditableRow {
 
 const inputBase =
   'w-full rounded border bg-white px-2 py-1.5 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-forest/30';
-
-function toNumber(text: string): number | undefined {
-  const value = Number(text.replace(/,/g, ''));
-  return text.trim() === '' || !Number.isFinite(value) ? undefined : value;
-}
 
 function newRow(): EditableRow {
   return {
@@ -84,8 +80,8 @@ export function VerifyTable({ reportId, rows }: { reportId: string; rows: Editab
                   rawName: row.rawName,
                   value: row.value,
                   unit: row.unit,
-                  refLow: toNumber(row.refLow),
-                  refHigh: toNumber(row.refHigh),
+                  refLow: parseBoundInput(row.refLow, 'low'),
+                  refHigh: parseBoundInput(row.refHigh, 'high'),
                   labFlags: row.labFlags,
                 }),
               );

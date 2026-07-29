@@ -16,13 +16,21 @@ import {
   saveRows,
   setReportStatus,
 } from '@/lib/data';
-import { dobSchema, type Explanation, type OutreachMethod, type ResultRow } from '@/lib/types';
+import {
+  dobSchema,
+  uploadedFileMetaSchema,
+  type Explanation,
+  type OutreachMethod,
+  type ResultRow,
+} from '@/lib/types';
 import { draftExplanation } from '@/lib/draft';
 import { sendShareLink } from '@/lib/email';
-import { extractRows } from '@/lib/extract';
+import { extractRows, type ExtractionResult } from '@/lib/extract';
+import { isPdfBytes } from '@/lib/extract/pdf-bytes';
 import { matchAnalyte } from '@/lib/analytes';
 import { classifyRow } from '@/lib/classify';
 import { criticalAnalyteIds, OUTREACH_NOTE_MAX } from '@/lib/ui/outreach';
+import { parseBoundInput, parseExtractedBound } from '@/lib/ui/parse-bound';
 import type { EditableRow } from '@/components/provider/verify-table';
 import {
   createProviderSession,
@@ -65,47 +73,94 @@ export async function signOutAction(): Promise<void> {
   redirect('/provider/sign-in');
 }
 
-export async function extractReportAction(formData: FormData): Promise<void> {
+export async function extractReportAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const reportId = String(formData.get('reportId') ?? '');
   const report = await getReport(reportId);
-  if (report === null) return;
+  if (report === null) {
+    return { error: 'That report could not be opened. Go back to the reports list and try again.' };
+  }
 
   // The provider may attach the report PDF on this step; its bytes feed the live
   // extractor in the same request (no persistence needed). With no file — or no
   // API key — extraction falls back to the offline synthetic path keyed by the
   // report's pdfRef, so the flow runs end to end without credentials.
   const file = formData.get('pdf');
-  const pdfBytes =
-    file instanceof File && file.size > 0 ? new Uint8Array(await file.arrayBuffer()) : undefined;
+  let pdfBytes: Uint8Array | undefined;
+  // Size is what distinguishes "no file" here: an untouched file input still
+  // posts a File — measured as name "blob", size 0, type application/octet-stream
+  // — so nothing about the name or type separates it from a chosen file. The cost
+  // is that a genuinely empty file the provider picked (a failed download, a
+  // cloud placeholder) also reads as "no file" and falls to the synthetic sample;
+  // the verify gate catches it, since those rows are a different panel entirely.
+  // Keying on the sentinel instead was tried and rejected: it would make the
+  // demo's no-PDF path depend on an undocumented framework detail.
+  if (file instanceof File && file.size > 0) {
+    // An uploaded file is untrusted input (FR-02): the client `accept=` attribute
+    // filters the picker, it does not enforce anything server-side. Refuse a bad
+    // file rather than quietly ignoring it and transcribing the synthetic sample
+    // instead — the provider would then verify rows that came from something
+    // other than the report they attached. One message covers every reason: the
+    // provider's next move is the same, and naming both ways out matters more,
+    // since a file input keeps its selection until it is replaced.
+    const rejected = {
+      error:
+        'That file could not be used. Choose a PDF under 15 MB, or reload the page to continue without a file.',
+    };
+    const meta = uploadedFileMetaSchema.safeParse({
+      fileName: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+    });
+    if (!meta.success) return rejected;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (!isPdfBytes(bytes)) return rejected;
+    pdfBytes = bytes;
+  }
 
-  const { rows } = await extractRows({ pdfRef: report.pdfRef, pdfBytes });
+  // A transcription failure — unreadable PDF, network, vendor or schema error —
+  // must not take down the screen mid-report. Nothing is saved, so the report
+  // stays 'uploaded' and this step can simply be retried. No logging in the
+  // failure path: an extraction payload carries lab values (safety rule 5).
+  let extracted: ExtractionResult;
+  try {
+    extracted = await extractRows({ pdfRef: report.pdfRef, pdfBytes });
+  } catch {
+    return { error: 'The report could not be read. Check the file and try again.' };
+  }
 
   // Transcription only (FR-03): store rows unmatched and unclassified. The
   // analyte match and classification are stamped after the provider verifies the
   // values against the report (FR-05/FR-06), in confirmVerificationAction.
-  const stored: ResultRow[] = rows.map((row, index) => ({
+  const stored: ResultRow[] = extracted.rows.map((row, index) => ({
     id: `${reportId}-${index}`,
     reportId,
     rawName: row.rawName,
     analyteId: undefined,
     value: row.value,
     unit: row.unit,
-    refLow: toNumber(row.refLow ?? ''),
-    refHigh: toNumber(row.refHigh ?? ''),
+    refLow: parseExtractedBound(row.refLow),
+    refHigh: parseExtractedBound(row.refHigh),
     rawRange: row.rawRange,
     labFlags: row.labFlags,
     lowConfidenceFields: row.lowConfidenceFields,
     classification: undefined,
   }));
 
-  await saveRows(reportId, stored);
-  await setReportStatus(reportId, 'extracted');
+  // The writes can fail the same way the extractor can once the data layer is
+  // Supabase rather than the in-memory mock, so they are contained too. saveRows
+  // replaces the report's rows wholesale, so a retry after a partial write lands
+  // on the same result rather than doubling them.
+  try {
+    await saveRows(reportId, stored);
+    await setReportStatus(reportId, 'extracted');
+  } catch {
+    return { error: 'The results could not be saved. Try reading the report again.' };
+  }
   revalidatePath(reportPath(reportId));
-}
-
-function toNumber(text: string): number | undefined {
-  const value = Number(text.replace(/,/g, ''));
-  return text.trim() === '' || !Number.isFinite(value) ? undefined : value;
+  return {};
 }
 
 export async function confirmVerificationAction(formData: FormData): Promise<void> {
@@ -128,8 +183,10 @@ export async function confirmVerificationAction(formData: FormData): Promise<voi
       // rawName against the PDF, so it — not any stale client-sent analyteId —
       // decides the dictionary match. No match = honestly "not covered" (FR-04).
       const analyte = matchAnalyte(row.rawName);
-      const refLow = toNumber(row.refLow);
-      const refHigh = toNumber(row.refHigh);
+      // Same parse the verify screen previewed with, so what the provider
+      // approved and what is stamped cannot disagree (preview-classification.ts).
+      const refLow = parseBoundInput(row.refLow, 'low');
+      const refHigh = parseBoundInput(row.refHigh, 'high');
       const unit = row.unit.trim() === '' ? undefined : row.unit;
       return {
         id: row.id,

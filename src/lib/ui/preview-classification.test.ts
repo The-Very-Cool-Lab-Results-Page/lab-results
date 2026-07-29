@@ -82,4 +82,5 @@ describe('previewClassification', () => {
     );
     expect(preview).toEqual({ kind: 'range', band: 'above', critical: false });
   });
+
 });
