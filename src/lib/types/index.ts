@@ -44,10 +44,20 @@ export type ExtractedRow = z.infer<typeof extractedRowSchema>;
 /** ~15 MB — proxy for FR-02's "~10 pages"; page count is checked later in upload logic. */
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
+/**
+ * `mimeType` is client-supplied and browsers disagree: a dragged PDF often
+ * arrives with an empty or generic binary type. It is therefore checked loosely
+ * here, and whether the upload is really a PDF is decided by its leading bytes
+ * (`isPdfBytes` in src/lib/extract/pdf-bytes.ts).
+ */
 export const uploadedFileMetaSchema = z
   .object({
     fileName: z.string().min(1),
-    mimeType: z.literal('application/pdf'),
+    mimeType: z.union([
+      z.literal('application/pdf'),
+      z.literal('application/octet-stream'),
+      z.literal(''),
+    ]),
     sizeBytes: z.number().int().positive().max(MAX_UPLOAD_BYTES),
   })
   .strict();

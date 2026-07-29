@@ -49,6 +49,15 @@ export function DobGate({ token, expiresAt }: { token: string; expiresAt: string
             onChange={(field, next) => setDob((current) => ({ ...current, [field]: next }))}
             error={state.error}
           />
+          {state.showClinicHelp && (
+            <p
+              role="status"
+              className="rounded-lg bg-forest-soft px-4 py-3 text-sm leading-relaxed text-forest"
+            >
+              Still not matching? {CLINIC.name} can open your results with you — their number is
+              just below.
+            </p>
+          )}
           <Button type="submit" className="mt-1 w-full" disabled={pending}>
             {pending ? 'Opening...' : 'View my results'}
           </Button>

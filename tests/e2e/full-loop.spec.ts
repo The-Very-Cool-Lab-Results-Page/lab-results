@@ -96,6 +96,99 @@ test('provider creates a report, walks it, and the patient reads it', async ({ p
   await expect(ironCard.getByText(/Typical range/)).toHaveCount(0);
 });
 
+test('a file that is not a PDF is refused inline and the report stays at the read step', async ({
+  page,
+}) => {
+  await signIn(page);
+
+  await page.getByRole('link', { name: 'New report' }).first().click();
+  await page.getByLabel('Patient name').fill('Casey Sample');
+  await page.getByLabel('Patient email').fill('casey.sample@example.test');
+  await page.getByLabel('Patient date of birth').fill('1986-08-20');
+  await page.getByRole('button', { name: 'Create report' }).click();
+
+  await page.getByLabel(/Report PDF/).setInputFiles({
+    name: 'lab-notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not a pdf'),
+  });
+  await page.getByRole('button', { name: 'Read the results' }).click();
+
+  // Refused at the boundary: an inline message, not the generic error boundary,
+  // and nothing was transcribed — the same step is still on screen to retry.
+  await expect(page.getByText(/Choose a PDF under 15 MB/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Read the results' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirm results' })).toHaveCount(0);
+});
+
+test('what the verify screen previews is what confirming stamps (FR-05)', async ({ page }) => {
+  await signIn(page);
+
+  await page.getByRole('link', { name: 'New report' }).first().click();
+  await page.getByLabel('Patient name').fill('Alex Mirror');
+  await page.getByLabel('Patient email').fill('alex.mirror@example.test');
+  await page.getByLabel('Patient date of birth').fill('1982-12-01');
+  await page.getByRole('button', { name: 'Create report' }).click();
+  await page.getByRole('button', { name: 'Read the results' }).click();
+
+  // Retype HDL's lower bound the way the report prints it. The preview runs in
+  // the browser and the stamp runs on the server, so this is the one assertion
+  // that catches the two reading the same cell differently — a provider
+  // approving a preview that is not what gets stored is the gate failing open.
+  const hdl = page.locator('tbody tr').nth(2);
+  await expect(hdl.getByRole('textbox', { name: 'Test name' })).toHaveValue('HDL Cholesterol');
+  await hdl.getByRole('textbox', { name: 'Reference low' }).fill('> 40');
+
+  // "Will show as" — the browser's reading of the cell the provider just typed.
+  const previewed = (await hdl.locator('td').nth(5).innerText()).trim();
+  expect(previewed).toBe('In range');
+
+  await page.getByRole('button', { name: 'Confirm results' }).click();
+
+  // The server's reading of the same cell. HDL appearing here at all already
+  // proves it was stored with a usable range — a row the server read as
+  // rangeless is dropped before drafting — and the pill pins the exact verdict.
+  const stamped = page.locator('div:has(> #text-hdl-cholesterol)');
+  await expect(stamped).toContainText(previewed);
+});
+
+test('a report left with no results never affirms that every result is typical', async ({
+  page,
+}) => {
+  await signIn(page);
+
+  await page.getByRole('link', { name: 'New report' }).first().click();
+  await page.getByLabel('Patient name').fill('Robin Empty');
+  await page.getByLabel('Patient email').fill('robin.empty@example.test');
+  await page.getByLabel('Patient date of birth').fill('1975-03-04');
+  await page.getByRole('button', { name: 'Create report' }).click();
+  await page.getByRole('button', { name: 'Read the results' }).click();
+
+  // The provider removes every transcribed row — nothing is left to explain.
+  const removeButtons = page.getByRole('button', { name: /^Remove / });
+  for (let remaining = await removeButtons.count(); remaining > 0; remaining -= 1) {
+    await removeButtons.first().click();
+  }
+  await page.getByRole('button', { name: 'Confirm results' }).click();
+  await page.getByRole('button', { name: /Approve for the patient/ }).click();
+  await page.getByRole('button', { name: 'Send to patient' }).click();
+
+  const href = await page.getByRole('link', { name: /^\/r\// }).getAttribute('href');
+  if (href === null) throw new Error('no patient link after send');
+  await page.goto(href);
+  await page.getByLabel('Last name').fill('Empty');
+  await page.getByLabel('Month').fill('3');
+  await page.getByLabel('Day').fill('4');
+  await page.getByLabel('Year').fill('1975');
+  await page.getByRole('button', { name: 'View my results' }).click();
+
+  // "Nothing outside the range" is vacuously true with no results; saying so
+  // would reassure a patient about a report that explains nothing.
+  await expect(page.getByRole('heading', { name: /here are your results/ })).toBeVisible();
+  await expect(page.getByText('Every result in the typical range')).toHaveCount(0);
+  await expect(page.getByText(/not medical advice/)).toBeVisible();
+});
+
 test('a critical result holds the report, is not sent, and its contact is logged', async ({
   page,
 }) => {
@@ -140,6 +233,31 @@ test('the patient gate rejects wrong info and accepts the right last name and DO
   await page.getByRole('button', { name: 'View my results' }).click();
   await expect(page.getByRole('heading', { name: /here are your results/ })).toBeVisible();
   await expect(page.getByText(/not medical advice/)).toBeVisible();
+});
+
+test('after three misses the gate offers the clinic instead of repeating itself', async ({
+  page,
+}) => {
+  await page.goto('/r/demo-park-token');
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.getByLabel('Last name').fill('Wrong');
+    await page.getByLabel('Month').fill('1');
+    await page.getByLabel('Day').fill('1');
+    await page.getByLabel('Year').fill('1970');
+    await page.getByRole('button', { name: 'View my results' }).click();
+    await expect(page.getByText(/did not match/)).toBeVisible();
+  }
+
+  await expect(page.getByText(/Still not matching\?/)).toBeVisible();
+
+  // Help copy only — the gate still opens for the right answer, never locks out.
+  await page.getByLabel('Last name').fill('Park');
+  await page.getByLabel('Month').fill('2');
+  await page.getByLabel('Day').fill('28');
+  await page.getByLabel('Year').fill('1995');
+  await page.getByRole('button', { name: 'View my results' }).click();
+  await expect(page.getByRole('heading', { name: /here are your results/ })).toBeVisible();
 });
 
 async function openPatient(
