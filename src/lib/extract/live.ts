@@ -5,11 +5,9 @@ import { generateStructured } from '@/lib/llm';
 import { extractionSchema, type ExtractionResult } from './schema';
 
 /**
- * The live extraction path: transcribe a report via the model, through the
+ * The live extraction path: transcribe a report PDF via the model, through the
  * single vendor boundary in src/lib/llm.ts. Reached only when an API key AND the
- * report bytes are both present (the caller checks), so nothing is ever guessed.
- * The report may be a PDF or a photo (image/*); its actual media type is passed
- * through so the model reads it as what it is.
+ * PDF bytes are both present (the caller checks), so nothing is ever guessed.
  *
  * Loaded dynamically by index.ts so the offline path never pulls in the vendor
  * SDK or `server-only`. Not covered by the offline tests or CI — validate on a
@@ -21,10 +19,7 @@ import { extractionSchema, type ExtractionResult } from './schema';
  */
 const PROMPT_PATH = join(process.cwd(), 'src/lib/extract/extract-prompt.md');
 
-export async function liveExtract(
-  bytes: Uint8Array,
-  mediaType = 'application/pdf',
-): Promise<ExtractionResult> {
+export async function liveExtract(pdfBytes: Uint8Array): Promise<ExtractionResult> {
   const system = readFileSync(PROMPT_PATH, 'utf8');
   const result = await generateStructured({
     system,
@@ -34,7 +29,7 @@ export async function liveExtract(
         type: 'text',
         text: 'Transcribe every test line from this lab report as structured rows. Add no medical knowledge.',
       },
-      { type: 'file', data: bytes, mediaType },
+      { type: 'file', data: pdfBytes, mediaType: 'application/pdf' },
     ],
   });
   // generateStructured already validates against the schema; re-parse so the live
