@@ -4,19 +4,15 @@ import { isDobConfirmed } from '@/lib/auth/dob-gate';
 import { isExpired } from '@/lib/share-link';
 import { buildResultsView } from '@/lib/ui/results-view';
 import { patientGate } from '@/lib/ui/patient-gate';
-import { CLINIC } from '@/lib/clinic';
 import { DobGate } from '@/components/patient/dob-gate';
 import { ResultsPage } from '@/components/patient/results-page';
+import { PatientNotice } from '@/components/patient/patient-notice';
 
 function ExpiredNotice() {
   return (
-    <div className="mx-auto max-w-md py-8 text-center">
-      <h1 className="font-display text-2xl text-ink">This link has expired</h1>
-      <p className="mt-2 text-sm text-muted">
-        For your privacy, result links expire after a while. Call {CLINIC.name} at {CLINIC.phone}{' '}
-        and they can send you a new one.
-      </p>
-    </div>
+    <PatientNotice tone="calm" heading="This link has expired">
+      For your privacy, result links expire after a while. The clinic can send you a fresh one.
+    </PatientNotice>
   );
 }
 

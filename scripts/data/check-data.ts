@@ -161,12 +161,12 @@ async function main(): Promise<void> {
       (await getExplanation(report.id))?.overallText === 'Synthetic check explanation.',
     );
 
-    // --- share link: idempotent (one per report) + ~90 day expiry ---
+    // --- share link: idempotent (one per report) + ~30 day expiry ---
     const link1 = await createShareLink(report.id);
     const link2 = await createShareLink(report.id);
     check('createShareLink is idempotent per report', link1.token === link2.token);
     const ttlDays = (new Date(link1.expiresAt).getTime() - Date.now()) / DAY_MS;
-    check('share link expires in ~90 days', ttlDays > 89 && ttlDays < 91);
+    check('share link expires in ~30 days', ttlDays > 29 && ttlDays < 31);
 
     // --- markShareLinkOpened: first open wins, never overwritten ---
     await markShareLinkOpened(link1.token);

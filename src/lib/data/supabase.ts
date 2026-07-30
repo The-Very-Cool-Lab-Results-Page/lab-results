@@ -3,7 +3,7 @@ import 'server-only';
 import { randomBytes } from 'node:crypto';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
-import { isExpired } from '@/lib/share-link';
+import { isExpired, SHARE_LINK_TTL_MS } from '@/lib/share-link';
 import type { Explanation, PatientInfo, ReportStatus, ResultRow } from '@/lib/types';
 import {
   type DataLayer,
@@ -43,8 +43,6 @@ function db() {
 function ensure(context: string, error: PostgrestError | null): void {
   if (error) throw new Error(`${context}: ${error.message}`);
 }
-
-const SHARE_LINK_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // Reads

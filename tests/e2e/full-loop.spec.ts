@@ -62,6 +62,12 @@ test('provider creates a report, walks it, and the patient reads it', async ({ p
     expect(after.shareLink).toBe(before.shareLink + 1);
   }).toPass();
 
+  // Re-send while the link is live: the same token is re-emailed, never a new one.
+  const tokenBefore = await link.innerText();
+  await page.getByRole('button', { name: 'Re-send the link' }).click();
+  await expect(page.getByText(/re-emails this same link/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /^\/r\// })).toHaveText(tokenBefore);
+
   await page.goto(href);
   await page.getByLabel('Last name').fill('Pat');
   await page.getByLabel('Month').fill('4');
