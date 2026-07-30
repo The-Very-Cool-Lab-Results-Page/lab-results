@@ -8,7 +8,8 @@ import {
   stepIndexForStatus,
 } from '@/lib/ui/report-status-display';
 import { resetReportAction, retryDraftAction, sendLinkAction } from '@/app/provider/actions';
-import { classificationDisplay } from '@/lib/ui/classification-display';
+import { rowClassificationDisplay } from '@/lib/ui/classification-display';
+import { draftedRowByAnalyte, rowsOutsideExplanation } from '@/lib/ui/draft-review';
 import { criticalAnalyteIds, outstandingOutreach } from '@/lib/ui/outreach';
 import { CLINIC } from '@/lib/clinic';
 import { Stepper } from '@/components/ui/stepper';
@@ -23,6 +24,10 @@ import {
   type CriticalItem,
 } from '@/components/provider/critical-outreach-panel';
 import { CopyLinkButton } from '@/components/provider/copy-link-button';
+import {
+  UnexplainedRowsNote,
+  type UnexplainedRow,
+} from '@/components/provider/unexplained-rows-note';
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,14 +51,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   }));
   const outstandingCritical = outstandingOutreach(criticalAnalyteIds(rows), outreach);
 
-  const rowByAnalyte = new Map(
-    rows.filter((row) => row.analyteId).map((row) => [row.analyteId as string, row]),
-  );
+  const rowByAnalyte = draftedRowByAnalyte(rows);
   const draftEntries: DraftEntry[] = (explanation?.perTest ?? []).map((entry) => {
     const row = rowByAnalyte.get(entry.analyteId);
-    const display = classificationDisplay(
-      row?.classification ?? { kind: 'unclassifiable', reason: 'no-range' },
-    );
+    const display = rowClassificationDisplay(row?.classification);
     return {
       analyteId: entry.analyteId,
       displayName: analyteDisplayName(entry.analyteId, entry.analyteId),
@@ -62,6 +63,21 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       unit: row?.unit,
       tone: display.tone,
       statusLabel: display.label,
+    };
+  });
+
+  const unexplainedRows: UnexplainedRow[] = rowsOutsideExplanation(
+    rows,
+    explanation?.perTest ?? [],
+  ).map((row) => {
+    const display = rowClassificationDisplay(row.classification);
+    return {
+      id: row.id,
+      displayName: analyteDisplayName(row.analyteId, row.rawName),
+      value: row.value,
+      unit: row.unit,
+      statusLabel: display.label,
+      tone: display.tone,
     };
   });
 
@@ -168,6 +184,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 entries={draftEntries}
               />
             </div>
+            <UnexplainedRowsNote rows={unexplainedRows} />
           </section>
         )}
 
@@ -193,6 +210,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             </div>
+
+            <UnexplainedRowsNote rows={unexplainedRows} />
 
             <div className="mt-6 rounded-[var(--radius-card)] border border-forest/20 bg-forest-soft/40 p-5">
               <h3 className="font-medium text-ink">Ready to send</h3>

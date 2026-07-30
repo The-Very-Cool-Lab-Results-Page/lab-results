@@ -16,6 +16,16 @@ export interface ClassificationDisplay {
   showMarker: boolean;
 }
 
+/**
+ * The same mapping for a row that has no classification yet. A missing classification is
+ * shown as unreadable rather than as anything reassuring — the one honest default.
+ */
+export function rowClassificationDisplay(
+  classification: Classification | undefined,
+): ClassificationDisplay {
+  return classificationDisplay(classification ?? { kind: 'unclassifiable', reason: 'no-range' });
+}
+
 export function classificationDisplay(classification: Classification): ClassificationDisplay {
   switch (classification.kind) {
     case 'range':
