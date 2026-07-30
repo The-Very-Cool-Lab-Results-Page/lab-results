@@ -84,11 +84,9 @@ export async function extractReportAction(
   }
 
   // The provider may attach the report PDF on this step; its bytes feed the live
-  // extractor in the same request (no persistence needed). With no file — or no
-  // API key — extraction falls back to the offline synthetic path keyed by the
+  // extractor in the same request (no persistence needed). With no file, or no
+  // API key, extraction falls back to the offline synthetic path keyed by the
   // report's pdfRef, so the flow runs end to end without credentials.
-  // The report may be a PDF or a photo of the printout (image/*); pass its real
-  // media type so the model reads it as what it is. An empty type falls back to PDF.
   const file = formData.get('pdf');
   let pdfBytes: Uint8Array | undefined;
   // Size is what distinguishes "no file" here: an untouched file input still
