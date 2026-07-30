@@ -1,4 +1,5 @@
 import manualEntry from './fixtures/manual-entry.json';
+import reyesAnnualCmp from './fixtures/reyes-annual-cmp.json';
 import { extractionSchema, type ExtractionResult } from './schema';
 
 /**
@@ -14,6 +15,11 @@ import { extractionSchema, type ExtractionResult } from './schema';
  */
 const OFFLINE_FIXTURES: Record<string, unknown> = {
   'manual-entry': manualEntry,
+  // Transcribes the liver-metabolic corpus PDF, so LLM_OFFLINE=1 is a drop-in fallback for
+  // the one demo report that gets extracted. A copy of that corpus expected output —
+  // extract.test.ts fails if the two drift. The other seeded reports are past extraction,
+  // so they have no fixture and cannot be re-read offline after a reset.
+  'reyes-annual-cmp': reyesAnnualCmp,
 };
 
 /** The synthetic report refs available offline (one per fixture). */

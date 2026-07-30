@@ -1,5 +1,6 @@
 import { cn } from '@/lib/ui/cn';
 import type { Tone } from '@/lib/ui/classification-display';
+import { axisBounds } from '@/lib/ui/range-axis';
 
 /**
  * A horizontal scale with the typical range highlighted and a marker at the
@@ -34,27 +35,7 @@ function typicalLabel(low?: number, high?: number): string {
 }
 
 export function RangeMarker({ value, low, high, tone }: RangeMarkerProps) {
-  let min = Math.min(value, low ?? value, high ?? value);
-  let max = Math.max(value, low ?? value, high ?? value);
-
-  if (low !== undefined && high !== undefined) {
-    const pad = (high - low) * 0.6 || Math.abs(high) * 0.2 || 1;
-    min = Math.min(min, low - pad);
-    max = Math.max(max, high + pad);
-  } else if (high !== undefined) {
-    min = Math.min(min, 0);
-    max = Math.max(max, high * 1.6);
-  } else if (low !== undefined) {
-    min = Math.min(min, low * 0.5);
-    max = Math.max(max, low * 1.8);
-  }
-  if (min === max) {
-    min -= 1;
-    max += 1;
-  }
-  const spread = max - min;
-  if (value < min) min = value - spread * 0.1;
-  if (value > max) max = value + spread * 0.1;
+  const { min, max } = axisBounds(value, low, high);
 
   const pos = (x: number) => Math.min(100, Math.max(0, ((x - min) / (max - min)) * 100));
   const bandStart = low !== undefined ? pos(low) : 0;
