@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import corpusExpected from '../../../tests/extraction/liver-metabolic-quest/expected.json';
 import { availablePdfRefs, offlineExtract } from './offline';
 import { extractionSchema } from './schema';
 
@@ -42,6 +43,14 @@ describe('offline extraction', () => {
 
   it('fails loudly when no fixture matches the pdfRef (never fabricates)', () => {
     expect(() => offlineExtract('no-such-report')).toThrow(/No synthetic extraction fixture/);
+  });
+
+  // The demo's fresh report is walked with LLM_OFFLINE=1 as the day-of fallback, which
+  // only stands in for the live path while it transcribes the same PDF the live path is
+  // given. The corpus expected output is the authority; the fixture is the copy.
+  it('serves the demo report identically to the corpus expected output', () => {
+    expect(availablePdfRefs()).toContain('reyes-annual-cmp');
+    expect(offlineExtract('reyes-annual-cmp')).toEqual(extractionSchema.parse(corpusExpected));
   });
 });
 

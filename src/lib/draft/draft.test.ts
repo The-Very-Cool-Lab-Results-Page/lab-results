@@ -176,6 +176,20 @@ describe('offlineDraft', () => {
     expect(draft.perTest[0].text.includes(excerpt)).toBe(false);
     expect(draft.overallText.includes(excerpt)).toBe(false);
   });
+
+  it('says there is nothing to summarize when every row was excluded', () => {
+    // Implausible and not-covered rows are dropped by buildDraftInput, so a
+    // report can reach drafting with no range rows at all.
+    const input = buildDraftInput([
+      row({ analyteId: 'glucose', classification: { kind: 'implausible' } }),
+      row({ analyteId: undefined, rawName: 'Iron', classification: { kind: 'not-covered' } }),
+    ]);
+    expect(input).toHaveLength(0);
+    const draft = offlineDraft(input);
+    expect(draft.overallText).toContain('no results with a typical range');
+    expect(draft.overallText).not.toContain('0 of 0');
+    expect(draft.perTest).toHaveLength(0);
+  });
 });
 
 describe('assertNoCriticalRows (whole-report hold, FR-07)', () => {

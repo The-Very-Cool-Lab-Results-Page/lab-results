@@ -23,7 +23,14 @@ export function OverallPictureBox({
     { key: 'outside', value: toneCounts.outside, bar: 'bg-amber' },
     { key: 'neutral', value: neutralCount, bar: 'bg-line' },
   ];
-  const allInRange = toneCounts.outside === 0 && neutralCount === 0 && toneCounts.critical === 0;
+  // A report with no results at all satisfies "nothing outside the range"
+  // vacuously; affirming every result is typical when there are none would be
+  // false reassurance, so require at least one in-range result to say it.
+  const allInRange =
+    toneCounts.inRange > 0 &&
+    toneCounts.outside === 0 &&
+    neutralCount === 0 &&
+    toneCounts.critical === 0;
   const pct = totalCount > 0 ? Math.round((inRangeCount / totalCount) * 100) : 0;
 
   return (

@@ -1,0 +1,70 @@
+{
+  "rows": [
+    {
+      "rawName": "GLUCOSE",
+      "value": "15000",
+      "unit": "mg/dL",
+      "refLow": "65",
+      "refHigh": "99",
+      "rawRange": "65-99",
+      "labFlags": ["HIGH"],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "ALT",
+      "value": "45",
+      "unit": "U/L",
+      "refLow": "9",
+      "refHigh": "46",
+      "rawRange": "9-46",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "AST",
+      "value": "30",
+      "unit": "U/L",
+      "refLow": "10",
+      "refHigh": "35",
+      "rawRange": "10-35",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "ALKALINE PHOSPHATASE",
+      "value": "88",
+      "unit": "U/L",
+      "refLow": "35",
+      "refHigh": "144",
+      "rawRange": "35-144",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "BILIRUBIN, TOTAL",
+      "value": "0.7",
+      "unit": "mg/dL",
+      "refLow": "0.2",
+      "refHigh": "1.2",
+      "rawRange": "0.2-1.2",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "ALBUMIN",
+      "value": "4.2",
+      "unit": "g/dL",
+      "refLow": "3.6",
+      "refHigh": "5.1",
+      "rawRange": "3.6-5.1",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    },
+    {
+      "rawName": "HEPATITIS B SURFACE AG",
+      "value": "Non-Reactive",
+      "labFlags": [],
+      "lowConfidenceFields": []
+    }
+  ]
+}

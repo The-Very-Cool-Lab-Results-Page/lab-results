@@ -7,13 +7,9 @@ import {
   reportStatusDisplay,
   stepIndexForStatus,
 } from '@/lib/ui/report-status-display';
-import {
-  extractReportAction,
-  resetReportAction,
-  retryDraftAction,
-  sendLinkAction,
-} from '@/app/provider/actions';
-import { classificationDisplay } from '@/lib/ui/classification-display';
+import { resetReportAction, retryDraftAction, sendLinkAction } from '@/app/provider/actions';
+import { rowClassificationDisplay } from '@/lib/ui/classification-display';
+import { draftedRowByAnalyte, rowsOutsideExplanation } from '@/lib/ui/draft-review';
 import { criticalAnalyteIds, outstandingOutreach } from '@/lib/ui/outreach';
 import { CLINIC } from '@/lib/clinic';
 import { isExpired } from '@/lib/share-link';
@@ -21,6 +17,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { StatusPill } from '@/components/ui/status-pill';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmButton } from '@/components/ui/confirm-button';
+import { ExtractForm } from '@/components/provider/extract-form';
 import { VerifyTable } from '@/components/provider/verify-table';
 import { DraftEditor, type DraftEntry } from '@/components/provider/draft-editor';
 import {
@@ -28,9 +25,12 @@ import {
   type CriticalItem,
 } from '@/components/provider/critical-outreach-panel';
 import { CopyLinkButton } from '@/components/provider/copy-link-button';
-import { PdfFileInput } from '@/components/provider/pdf-file-input';
-import { PendingNote } from '@/components/provider/pending-note';
 import { ScrollReset } from '@/components/provider/scroll-reset';
+import { PendingNote } from '@/components/provider/pending-note';
+import {
+  UnexplainedRowsNote,
+  type UnexplainedRow,
+} from '@/components/provider/unexplained-rows-note';
 
 function formatExpiry(expiresAt: string): string {
   return new Date(expiresAt).toLocaleDateString('en-US', {
@@ -62,14 +62,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   }));
   const outstandingCritical = outstandingOutreach(criticalAnalyteIds(rows), outreach);
 
-  const rowByAnalyte = new Map(
-    rows.filter((row) => row.analyteId).map((row) => [row.analyteId as string, row]),
-  );
+  const rowByAnalyte = draftedRowByAnalyte(rows);
   const draftEntries: DraftEntry[] = (explanation?.perTest ?? []).map((entry) => {
     const row = rowByAnalyte.get(entry.analyteId);
-    const display = classificationDisplay(
-      row?.classification ?? { kind: 'unclassifiable', reason: 'no-range' },
-    );
+    const display = rowClassificationDisplay(row?.classification);
     return {
       analyteId: entry.analyteId,
       displayName: analyteDisplayName(entry.analyteId, entry.analyteId),
@@ -78,6 +74,21 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       unit: row?.unit,
       tone: display.tone,
       statusLabel: display.label,
+    };
+  });
+
+  const unexplainedRows: UnexplainedRow[] = rowsOutsideExplanation(
+    rows,
+    explanation?.perTest ?? [],
+  ).map((row) => {
+    const display = rowClassificationDisplay(row.classification);
+    return {
+      id: row.id,
+      displayName: analyteDisplayName(row.analyteId, row.rawName),
+      value: row.value,
+      unit: row.unit,
+      statusLabel: display.label,
+      tone: display.tone,
     };
   });
 
@@ -119,24 +130,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
               The system transcribes each test line. You verify every value before anything is
               classified.
             </p>
-            <form action={extractReportAction} className="mt-6 max-w-xl">
-              <input type="hidden" name="reportId" value={report.id} />
-              <p className="mb-2 text-sm font-medium text-ink">
-                Report file <span className="font-normal text-muted">(optional in v1)</span>
-              </p>
-              <PdfFileInput name="pdf" />
-              <p className="mt-2 max-w-prose text-xs text-muted">
-                A PDF or a photo of the printout, with an API key configured, is transcribed live.
-                Otherwise a synthetic sample is used so the flow can be walked without credentials.
-              </p>
-              <div className="mt-4">
-                <SubmitButton pendingLabel="Reading...">Read the results</SubmitButton>
-              </div>
-              <PendingNote>
-                Transcribing the report line by line. With a PDF this is a live model call and takes
-                a few seconds.
-              </PendingNote>
-            </form>
+            <ExtractForm reportId={report.id} />
           </section>
         )}
 
@@ -206,6 +200,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 entries={draftEntries}
               />
             </div>
+            <UnexplainedRowsNote rows={unexplainedRows} />
           </section>
         )}
 
@@ -231,6 +226,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             </div>
+
+            <UnexplainedRowsNote rows={unexplainedRows} />
 
             <div className="mt-6 rounded-[var(--radius-card)] border border-forest/20 bg-forest-soft/40 p-5">
               <h3 className="font-medium text-ink">Ready to send</h3>

@@ -67,19 +67,18 @@ export function PdfFileInput({ name }: { name: string }) {
       </span>
       <span className="min-w-0">
         <span className="block text-sm font-medium text-ink">
-          {fileName ?? 'Choose a file or drag one here'}
+          {fileName ?? 'Choose a PDF or drag one here'}
         </span>
         <span className="block truncate text-xs text-muted">
-          {fileName
-            ? 'Click to replace'
-            : 'PDF or photo up to 15 MB, or skip to use a synthetic sample'}
+          {fileName ? 'Click to replace' : 'PDF up to 15 MB, or skip to use a synthetic sample'}
         </span>
       </span>
       <input
         ref={inputRef}
         type="file"
         name={name}
-        accept="application/pdf,image/*"
+        accept="application/pdf"
+        aria-label="Report PDF"
         className="sr-only"
         onChange={(event) => setFileName(event.target.files?.[0]?.name ?? null)}
       />
