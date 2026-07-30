@@ -29,12 +29,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { requireEnv } from '../src/lib/supabase/env';
-import {
-  MOCK_EXPLANATIONS,
-  MOCK_REPORTS,
-  MOCK_ROWS,
-  MOCK_SHARE_LINKS,
-} from '../src/lib/data/mock';
+import { MOCK_EXPLANATIONS, MOCK_REPORTS, MOCK_ROWS, MOCK_SHARE_LINKS } from '../src/lib/data/mock';
 import {
   resultRowToInsert,
   type ExplanationRow,
