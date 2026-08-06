@@ -55,8 +55,9 @@ Reyes and Chen are the two you drive; the rest are there to show the range of st
 ### 3. Live AI extraction (2 minutes)
 
 Open Samuel Reyes (status: uploaded). Attach the liver panel PDF and click "Read the
-results." Extraction is a real Claude call and takes about 15 seconds; narrate while it
-runs:
+results." A progress note appears under the button while the call runs, so the wait does
+not look like a hang. Extraction is a real Claude call and takes about 15 seconds; narrate
+while it runs:
 
 "The model is transcribing, not interpreting. It copies what the PDF prints, exactly. If
 it cannot read a field it flags it low-confidence rather than guessing. It never decides
@@ -95,9 +96,14 @@ patient": gate two.
 Click "Send to patient" and open the patient link. Enter last name `Reyes` and DOB
 `5 / 9 / 1988` to clear the gate.
 
-Walk the patient page top to bottom: the education-only disclaimer, the at-a-glance
-chips, the glucose row saying "please double-check" instead of a fake explanation, the
-hepatitis B row honestly saying it is not explained here, and the MedlinePlus links.
+Walk the patient page top to bottom: the education-only disclaimer, the ring showing how
+many results came back in the typical range, the at-a-glance chips beside it, the glucose
+row saying "please double-check" instead of a fake explanation, the hepatitis B row
+honestly saying it is not explained here, and the MedlinePlus links.
+
+Do not click "Download PDF" in passing: it opens the operating system print dialog, which
+covers the screen mid-demo. Either skip it, or click it deliberately as a beat, show the
+print layout, and cancel out.
 
 "This page is stored, approved content. Nothing is generated when the patient looks at
 it, so there is nothing the AI can improvise at view time."
@@ -135,14 +141,16 @@ Vercel with Supabase persistence and real extraction."
 
 ## If something goes wrong
 
-- Live extraction errors or stalls: click "New report", fill in any patient, and click
-  "Read the results" (no PDF needed). A freshly created report runs the synthetic path and
-  returns instantly, so you still get a full loop to walk. Only the transcription-of-15000
-  beat is lost. Note: this offline path works only for reports you create here, not for the
-  Reyes seed, which has no synthetic fixture and needs the live key.
+- Live extraction errors or stalls: nothing was saved, so Reyes is still at the read step.
+  Reload the page, then click "Read the results" without attaching anything; the on-screen
+  message says the same. Reloading is what clears the file input, since the drop zone has no
+  remove button, so clicking again without reloading resubmits the same PDF. With no file,
+  extraction uses this report's synthetic fixture and returns all seven rows instantly,
+  glucose 15000 and the uncovered hepatitis B test included. Every beat from section 4 on is
+  unchanged; you only lose the live-call narration.
 - Clicked too far or approved the wrong thing: "Start over" on the report page, or
   restart the dev server to reset every seed.
 - No usable API key on demo day, or the key is out of credits (the error names a low
-  balance): set `LLM_OFFLINE=1` in `.env.local` and restart, then drive the loop from a
-  "New report" (manual entry) instead of Reyes. The rest of the script is unchanged; skip
-  the narration about live calls.
+  balance): set `LLM_OFFLINE=1` in `.env.local` and restart. Reyes still walks end to end
+  from its synthetic fixture, so drive the script exactly as written and skip the narration
+  about live calls.
