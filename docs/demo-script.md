@@ -128,9 +128,8 @@ name; it refuses. Enter `Nguyen` and `9 / 14 / 1979`; it opens to an all-in-rang
 ### 9. Close (30 seconds)
 
 "Deterministic where it must be, AI where it helps, a human gate in front of everything a
-patient reads. What you just saw runs offline for development and testing, and the same
-code paths run against Supabase and live extraction when those are configured; nothing in
-this loop is demo-only."
+patient reads. Runs offline for development and testing, and the same code is live on
+Vercel with Supabase persistence and real extraction."
 
 ## Spare patient links
 
